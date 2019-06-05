@@ -204,7 +204,6 @@ export class BrowserMediaNetwork extends WebRtcNetwork implements IMediaNetwork 
       let isFront = true;
       mediaDevices.enumerateDevices()
         .then(sourceInfos => {
-          console.log(sourceInfos);
           let videoSourceId;
           for (let i = 0; i < sourceInfos.length; i++) {
             const sourceInfo = sourceInfos[i];
@@ -228,9 +227,11 @@ export class BrowserMediaNetwork extends WebRtcNetwork implements IMediaNetwork 
               DeviceApi.Update();
               //call worked -> setup a frame buffer that deals with the rest
               this.mLocalStream = new BrowserMediaStream(stream as MediaStream);
-              this.mLocalStream.InternalStreamAdded = (stream) => {
+              this.mLocalStream.setInternalStreamAdded((stream) => {
+                console.log('InternalStreamAdded (BrowserMediaNetwork  l-233)');
+                console.log(this.mLocalStream.VideoElement);
                 this.EnqueueMediaEvent(MediaEventType.StreamAdded, ConnectionId.INVALID, this.mLocalStream.VideoElement);
-              };
+              })
 
               //unlike native version this one will happily play the local sound causing an echo
               //set to mute

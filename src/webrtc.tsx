@@ -31,6 +31,9 @@ class Communication extends React.Component<Props, SelfState> {
 
   constructor(props: Props) {
     super(props);
+    this.state = {
+      isStarted: false,
+    }
     this.mNetConfig.IceServers = [
       { urls: "stun:stun.because-why-not.com:443" },
       { urls: "stun:stun.l.google.com:19302" }
@@ -98,7 +101,6 @@ class Communication extends React.Component<Props, SelfState> {
   }
 
   Update() {
-    console.log('UPDATE');
     if (this.mCall !== null)
       this.mCall.Update();
   }
@@ -107,26 +109,35 @@ class Communication extends React.Component<Props, SelfState> {
     console.log(sender);
     console.log(args);
     //User gave access to requested camera/ microphone
+    // The call object is successfully connected to the server waiting for another user to connect
     if (args.Type == awrtc.CallEventType.ConfigurationComplete) {
       console.log("configuration complete");
     }
-    else if (args.Type == awrtc.CallEventType.MediaUpdate) {
+    // probably important
+    else if (args.Type === awrtc.CallEventType.MediaUpdate) {
+      console.log('media update');
       let margs = args;
-      if (this.mLocalVideo == null && margs.ConnectionId == awrtc.ConnectionId.INVALID) {
+      if (this.mLocalVideo === null && margs.ConnectionId === awrtc.ConnectionId.INVALID) {
+        console.log('media update mLocalVideo === null');
         var videoElement = margs.VideoElement;
         this.mLocalVideo = videoElement;
-        console.log("local video added resolution:" + videoElement.videoWidth + videoElement.videoHeight + " fps: ??");
+        console.log(margs);
+        //console.log("local video added resolution:" + videoElement.videoWidth + videoElement.videoHeight + " fps: ??");
       }
-      else if (margs.ConnectionId != awrtc.ConnectionId.INVALID && this.mRemoteVideo[margs.ConnectionId.id] == null) {
+      else if (margs.ConnectionId !== awrtc.ConnectionId.INVALID && this.mRemoteVideo[margs.ConnectionId.id] === null) {
+        console.log('media update  this.mRemoteVideo[margs.ConnectionId.id] === null');
+
         var videoElement = margs.VideoElement;
         this.mRemoteVideo[margs.ConnectionId.id] = videoElement;
-        console.log("remote video added resolution:" + videoElement.videoWidth + videoElement.videoHeight + " fps: ??");
+        //console.log("remote video added resolution:" + videoElement.videoWidth + videoElement.videoHeight + " fps: ??");
       }
+      console.log(this.mRemoteVideo);
     }
-    else if (args.Type == awrtc.CallEventType.ListeningFailed) {
+    // Listening failed. Address might be in use or due to server/network error
+    else if (args.Type === awrtc.CallEventType.ListeningFailed) {
       //First attempt of this example is to try to listen on a certain address
       //for conference calls this should always work (expect the internet is dead)
-      if (this.mNetConfig.IsConference == false) {
+      if (this.mNetConfig.IsConference === false) {
         //no conference call and listening failed? someone might have claimed the address.
         //Try to connect to existing call
         this.mCall!.Call(this.mAddress);
@@ -138,7 +149,8 @@ class Communication extends React.Component<Props, SelfState> {
         return;
       }
     }
-    else if (args.Type == awrtc.CallEventType.ConnectionFailed) {
+    // Connection failed. Might be due to an server, network error or the address didn't exist
+    else if (args.Type === awrtc.CallEventType.ConnectionFailed) {
       //Outgoing call failed entirely. This can mean there is no address to connect to,
       //server is offline, internet is dead, firewall blocked access, ...
       let errorMsg = "Connection failed. Offline? Server dead? ";
@@ -146,46 +158,63 @@ class Communication extends React.Component<Props, SelfState> {
       this.Cleanup();
       return;
     }
-    else if (args.Type == awrtc.CallEventType.CallEnded) {
+    // The call ended
+    else if (args.Type === awrtc.CallEventType.CallEnded) {
       //call ended or was disconnected
       var callEndedEvent = args;
       console.log("call ended with id " + callEndedEvent.ConnectionId.id);
       delete this.mRemoteVideo[callEndedEvent.ConnectionId.id];
       //check if this was the last user
-      if (this.mNetConfig.IsConference == false && Object.keys(this.mRemoteVideo).length == 0) {
+      if (this.mNetConfig.IsConference === false && Object.keys(this.mRemoteVideo).length === 0) {
+        console.log(this.mNetConfig.IsConference);
         //1 to 1 call and only user left -> quit
-        this.Cleanup();
+        //this.Cleanup();
         return;
       }
     }
+    // Text message arrived (??)
     else if (args.Type == awrtc.CallEventType.Message) {
       //no ui for this yet. simply echo messages for testing
       let messageArgs = args;
       this.mCall!.Send(messageArgs.Content, messageArgs.Reliable, messageArgs.ConnectionId);
     }
-    else if (args.Type == awrtc.CallEventType.DataMessage) {
+    // Reliable or unreliable data msg arrived
+    else if (args.Type === awrtc.CallEventType.DataMessage) {
       //no ui for this yet. simply echo messages for testing
       let messageArgs = args;
       this.mCall!.SendData(messageArgs.Content, messageArgs.Reliable, messageArgs.ConnectionId);
+    }
+    // A call was accepted
+    else if (args.Type === awrtc.CallEventType.CallAccepted) {
+      console.log('Call Accepted');
+    }
+    /// Configuration failed. This happens if the configuration requested features
+    /// the system doesn't support e.g. no camera, camera doesn't support the requested resolution
+    /// or the user didn't allow the website to access the camera/microphone in WebGL mode.
+    else if (args.Type === awrtc.CallEventType.ConfigurationFailed) {
+      console.log('Configuration Failed');
+    }
+    // The call object is successfully connected to the server waiting for another user to connect.
+    else if (args.Type === awrtc.CallEventType.WaitForIncomingCall) {
+      console.log('Wait for incoming call');
     }
     else {
       console.log("Unhandled event: " + args.Type);
     }
   }
 
-  GetUrlParams() {
-    return "?a=" + this.mAddress + "&audio=" + /*this.mAudio*/'true' + "&video=" + /*this.mVideo*/'false' + "&" + "autostart=" + true;
-  }
-  GetUrl() {
-    return 'https://www.because-why-not.com/files/awrtc0983rc2/?a=KORJXWP&audio=true&video=false&autostart=true';
-  }
-
   componentDidMount() {
   }
 
   render() {
-    console.log(this.mCall);
-    return <Button title="On / Off" onPress={() => this.Start('AKEKOUKOU', true, false)} />
+    return <Button title="On / Off" onPress={() => {
+      this.setState({ isStarted: !this.state.isStarted }, () => {
+        if (this.state.isStarted)
+          this.Start('PLOP', true, true)
+        else
+          this.Stop()
+      })
+    }} />
   }
 }
 

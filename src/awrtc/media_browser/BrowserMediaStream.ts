@@ -89,7 +89,7 @@ export class BrowserMediaStream {
 
   private mHasVideo: boolean = false;
 
-  public InternalStreamAdded: (stream: BrowserMediaStream) => void = null;
+  public InternalStreamAdded: (stream: BrowserMediaStream) => void = null; // ??
 
 
 
@@ -101,6 +101,7 @@ export class BrowserMediaStream {
     if (this.mStream.getVideoTracks().length > 0) {
       this.mHasVideo = true;
       let vtrack = this.mStream.getVideoTracks()[0];
+      // MODIF
       //let settings = vtrack.getSettings();
       /*let fps = settings.frameRate;
       if (fps) {
@@ -110,6 +111,14 @@ export class BrowserMediaStream {
     }
     this.SetupElements();
   }
+
+  setInternalStreamAdded = (InternalStreamAdded) => {
+    this.InternalStreamAdded = InternalStreamAdded;
+    if (this.InternalStreamAdded != null) {
+      this.InternalStreamAdded(this);
+    }
+  }
+
   private CheckFrameRate(): void {
     //in chrome the track itself might miss the framerate but
     //we still know when it updates trough webkitDecodedFrameCount
@@ -124,22 +133,29 @@ export class BrowserMediaStream {
   }
   public SetupElements() {
 
-    /*this.mVideoElement = this.SetupVideoElement();
+    // MODIF
+    this.mVideoElement = this.SetupVideoElement();
     //TOOD: investigate bug here
     //In some cases onloadedmetadata is never called. This might happen due to a 
     //bug in firefox or might be related to a device / driver error
     //So far it only happens randomly (maybe 1 in 10 tries) on a single test device and only
     //with 720p. (video device "BisonCam, NB Pro" on MSI laptop)
     SLog.L("video element created. video tracks: " + this.mStream.getVideoTracks().length);
+    // onloadedmetadata not call before rendering
+    if (this.InternalStreamAdded != null) {
+      this.InternalStreamAdded(this);
+    }
     this.mVideoElement.onloadedmetadata = (e) => {
-
+      console.log('onloadedmetadata');
       //we might have shutdown everything by now already
       if (this.mVideoElement == null)
         return;
 
       this.mVideoElement.play();
-      if (this.InternalStreamAdded != null)
+      if (this.InternalStreamAdded != null) {
+        console.log('InternalStreamAdded');
         this.InternalStreamAdded(this);
+      }
 
       this.CheckFrameRate();
 
@@ -157,7 +173,7 @@ export class BrowserMediaStream {
       this.mIsActive = true;
     };
     //set the src value and trigger onloadedmetadata above
-    try {
+    /*try {
       //newer method. not yet supported everywhere
       let element: any = this.mVideoElement;
       element.srcObject = this.mStream;
@@ -204,6 +220,7 @@ export class BrowserMediaStream {
     return result;
   }
   public SetMute(mute: boolean): void {
+    // MODIF
     //this.mVideoElement.muted = mute;
   }
   public PeekFrame(): IFrameData {
@@ -286,7 +303,6 @@ export class BrowserMediaStream {
   }
 
   public CreateFrame(): RawFrame {
-
     this.mCanvasElement.width = this.mVideoElement.videoWidth;
     this.mCanvasElement.height = this.mVideoElement.videoHeight;
     let ctx = this.mCanvasElement.getContext("2d");
@@ -340,33 +356,33 @@ export class BrowserMediaStream {
 
 
   private SetupVideoElement(): HTMLVideoElement {
-
-    var videoElement: HTMLVideoElement = document.createElement("video");
+    // MODIF
+    var videoElement: any = {};
     //width/doesn't seem to be important
     videoElement.width = 320;
     videoElement.height = 240;
     videoElement.controls = true;
     videoElement.id = "awrtc_mediastream_video_" + this.mInstanceId;
     //videoElement.muted = true;
-    if (BrowserMediaStream.DEBUG_SHOW_ELEMENTS)
+    /*if (BrowserMediaStream.DEBUG_SHOW_ELEMENTS)
       document.body.appendChild(videoElement);
-
+*/
     return videoElement;
   }
 
   private SetupCanvas(): HTMLCanvasElement {
-
     if (this.mVideoElement == null || this.mVideoElement.videoWidth <= 0 ||
       this.mVideoElement.videoHeight <= 0)
       return null;
 
-    var canvas: HTMLCanvasElement = document.createElement("canvas");
+    //var canvas: HTMLCanvasElement = document.createElement("canvas");
+    let canvas: any = {}
     canvas.width = this.mVideoElement.videoWidth;
     canvas.height = this.mVideoElement.videoHeight;
     canvas.id = "awrtc_mediastream_canvas_" + this.mInstanceId;
 
-    if (BrowserMediaStream.DEBUG_SHOW_ELEMENTS)
-      document.body.appendChild(canvas);
+    /*if (BrowserMediaStream.DEBUG_SHOW_ELEMENTS)
+      document.body.appendChild(canvas);*/
     return canvas;
   }
 

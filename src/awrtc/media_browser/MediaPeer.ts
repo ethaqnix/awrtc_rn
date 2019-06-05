@@ -123,10 +123,10 @@ export class MediaPeer extends WebRtcDataPeer {
       (this.mPeer as RTCPeerConnectionObsolete).addStream(stream);
     }
     else {
-      this.mPeer.addStream(stream);
-      /*for (let v of stream.getTracks()) {
+      //this.mPeer.addStream(stream);
+      for (let v of stream.getTracks()) {
         this.mPeer.addTrack(v, stream);
-      }*/
+      }
     }
 
   }

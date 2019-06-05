@@ -35,13 +35,12 @@ console.debug("loading awrtc modules ...");
 //and browser compatibility.
 declare function require(moduleName: string)
 let adapter = require("webrtc-adapter");
-let RNadapter = require("react-native-webrtc");
+//let RNadapter = require("react-native-webrtc");
 
 export * from "./network/index"
 export * from "./media/index"
 //for simplicity browser and unity are merged here
 //it could as well be built and deployed separately
-export * from "./media_react_native/index"
 export * from "./media_browser/index"
 export * from "./unity/index"
 console.debug("loading awrtc modules completed");

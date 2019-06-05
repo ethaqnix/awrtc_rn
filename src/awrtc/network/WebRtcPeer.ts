@@ -1,4 +1,4 @@
-﻿import { RTCPeerConnection } from 'react-native-webrtc';
+﻿import { RTCIceCandidate, RTCPeerConnection, RTCSessionDescription } from 'react-native-webrtc';
 import {
   Debug,
   Helper,

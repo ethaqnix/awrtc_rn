@@ -348,7 +348,6 @@ export class AWebRtcCall implements ICall {
 
 
   public Update(): void {
-
     if (this.mIsDisposed)
       return;
     if (this.mNetwork == null)
